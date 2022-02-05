@@ -23,7 +23,8 @@ if args.operation == 'list':
 elif args.operation == 'download':
     barista.download_java_version(args.version, args.force)
 elif args.operation == 'use':
-    barista.download_java_version(args.version)
+    if args.force:
+        barista.download_java_version(args.version, args.force)
     barista.change_java_version(args.version)
 elif args.operation == 'clear':
     barista.delete_all()
