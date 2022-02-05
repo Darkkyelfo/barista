@@ -184,7 +184,3 @@ class Barista:
 
     def __delete_local_version(self, java_targz_name):
         remove(f'./versions/{java_targz_name}')
-
-
-
-Barista().download_java_version("15.0.2 (build 15.0.2+9)")
