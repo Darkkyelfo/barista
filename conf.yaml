@@ -1,2 +1,3 @@
 conf:
   download_path: ./versions
+  path_file: ~/.bashrc
