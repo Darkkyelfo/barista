@@ -14,16 +14,14 @@ args = parser.parse_args()
 
 barista = Barista()
 if args.operation == 'list':
-    if args.local is not None:
+    if args.local:
         for version in barista.list_installed_java_versions():
             print(version)
     else:
         for version in barista.list_java_versions():
             print(version)
 elif args.operation == 'download':
-    if args.force is not None:
-        barista.download_java_version(args.version, True)
-    else:
-        barista.download_java_version(args.version)
+    barista.download_java_version(args.version, args.force)
 elif args.operation == 'use':
+    barista.download_java_version(args.version)
     barista.change_java_version(args.version)

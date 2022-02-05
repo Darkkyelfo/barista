@@ -35,7 +35,7 @@ class OpenJDKExtractor:
         html_page = html_bytes.decode("utf8")
         request_conn.close()
 
-        soup = BeautifulSoup(html_page)
+        soup = BeautifulSoup(html_page, features="html.parser")
         current_version = None
         for i in soup.find_all("tr"):
             test = i.find_all("th")
@@ -59,6 +59,7 @@ class Configuration:
             conf_yaml = yaml.load(f, Loader=yaml.FullLoader)["conf"]
             self.__path_download = conf_yaml['download_path']
             self.__path_file = conf_yaml['path_file']
+            self.__repository = conf_yaml['repository']
         self.__so = system().lower()
 
     def path_download(self):
@@ -69,6 +70,9 @@ class Configuration:
 
     def path_file(self):
         return self.__path_file
+
+    def repository(self):
+        return self.__repository
 
 
 class Barista:
@@ -92,12 +96,12 @@ class Barista:
                 break
         if not version_exists:
             print(f"DOWNLOADING {version}...")
-            self.__s3client.download_file(self.__bucket_name, file_to_download, self.__version_to_file(version))
+            self.__download_java_file(version, file_to_download)
             print(f"DOWNLOAD {version} FINISHED !")
         elif force:
             print(f"DOWNLOADING {version}...")
             self.__delete_local_version(file_name)
-            self.__s3client.download_file(self.__bucket_name, file_to_download, self.__version_to_file(version))
+            self.__download_java_file(version, file_to_download)
             print(f"DOWNLOAD {version} FINISHED !")
 
     def __delete_local_version(self, java_targz_name):
@@ -122,14 +126,35 @@ class Barista:
 
     def get_list_java_versions(self):
         versions = {}
-        for java in self.__s3client.list_objects(Bucket=self.__bucket_name)["Contents"]:
-            java_version = java["Key"]
-            if self._configuration.so_name() in java_version and "jdk" in java_version:
-                format_version = java_version.replace(f"{self._configuration.so_name()}/", "") \
-                    .replace(".tar.gz", "") \
-                    .replace("_bin", "")
-                versions[format_version] = java_version
+        if 'aws' in self._configuration.repository():
+            for java in self.__s3client.list_objects(Bucket=self.__bucket_name)["Contents"]:
+                java_version = java["Key"]
+                if self._configuration.so_name() in java_version and "jdk" in java_version:
+                    format_version = java_version.replace(f"{self._configuration.so_name()}/", "") \
+                        .replace(".tar.gz", "") \
+                        .replace("_bin", "")
+                    versions[format_version] = java_version
+        else:
+            extractor = OpenJDKExtractor()
+            if 'linux' in self._configuration.so_name():
+                for holder in extractor.get_links_linux():
+                    versions[holder.version] = holder.link
+            else:
+                for holder in extractor.get_links_windows():
+                    versions[holder.version] = holder.link
+
         return versions
+
+    def __download_java_file(self, version, file_to_download):
+        if 'aws' in self._configuration.repository():
+            self.__s3client.download_file(self.__bucket_name, file_to_download, self.__version_to_file(version))
+        else:
+            request.urlretrieve(file_to_download, self.__version_to_file(version))
+
+    def __forma_version(self, version):
+        version.replace(f"{self._configuration.so_name()}/", "") \
+            .replace(".tar.gz", "") \
+            .replace("_bin", "")
 
     def list_java_versions(self):
         versions = list(self.__versions.keys())
@@ -137,7 +162,7 @@ class Barista:
         return versions
 
     def __version_to_file(self, version):
-        return f"{self._configuration.path_download()}/{version.lower()}.tag.gz"
+        return f"{self._configuration.path_download()}/{version.lower()}.tar.gz"
 
     def list_installed_java_versions(self):
         return listdir("./versions")
@@ -147,9 +172,3 @@ class Barista:
             os_system(f'setx /M path "%path%;{getcwd()}"')
         else:
             os_system(f"echo 'export PATH={getcwd()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
-
-
-extractor = OpenJDKExtractor()
-list = extractor.get_links_linux()
-
-# print(list)
