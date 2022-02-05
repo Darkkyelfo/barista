@@ -1,13 +1,56 @@
-
 import tarfile
 from os import path, mkdir, listdir, getcwd, system as os_system, remove
 from platform import system
 from shutil import move, rmtree
+from urllib import request
 
 import boto3
 import yaml
 from botocore import UNSIGNED
 from botocore.client import Config
+from bs4 import BeautifulSoup
+
+
+class LinkHolderOpenJDK:
+    def __init__(self, version, operation_system, architecture, link):
+        self.so = operation_system.lower()
+        self.architecture = architecture
+        self.version = version
+        self.link = link
+
+    def __str__(self):
+        return f"{self.version} {self.so} {self.architecture}"
+
+
+class OpenJDKExtractor:
+
+    def __init__(self):
+        self.__open_jdk_archive = "https://jdk.java.net/archive/"
+        self.__holder = []
+        self.__get_link()
+
+    def __get_link(self):
+        request_conn = request.urlopen(self.__open_jdk_archive)
+        html_bytes = request_conn.read()
+        html_page = html_bytes.decode("utf8")
+        request_conn.close()
+
+        soup = BeautifulSoup(html_page)
+        current_version = None
+        for i in soup.find_all("tr"):
+            test = i.find_all("th")
+            if len(test) == 0:
+                continue
+            if len(test) == 1:
+                current_version = test[0].text
+                continue
+            self.__holder.append(LinkHolderOpenJDK(current_version, test[0].text, test[1].text, i.a['href']))
+
+    def get_links_linux(self):
+        return [holder for holder in self.__holder if "linux" in holder.so]
+
+    def get_links_windows(self):
+        return [holder for holder in self.__holder if "windows" in holder.so]
 
 
 class Configuration:
@@ -82,8 +125,8 @@ class Barista:
         for java in self.__s3client.list_objects(Bucket=self.__bucket_name)["Contents"]:
             java_version = java["Key"]
             if self._configuration.so_name() in java_version and "jdk" in java_version:
-                format_version = java_version.replace(f"{self._configuration.so_name()}/", "")\
-                    .replace(".tar.gz", "")\
+                format_version = java_version.replace(f"{self._configuration.so_name()}/", "") \
+                    .replace(".tar.gz", "") \
                     .replace("_bin", "")
                 versions[format_version] = java_version
         return versions
@@ -106,10 +149,7 @@ class Barista:
             os_system(f"echo 'export PATH={getcwd()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
 
 
-# barista = Barista()
-# versoes = Barista().list_java_versions()
-# print(versoes)
-# print(barista.list_installed_java_versions())
-# barista.download_java_version(versoes[2], force=True)
-# barista.change_java_version(versoes[2])
-# barista.set_enviroment_var()
+extractor = OpenJDKExtractor()
+list = extractor.get_links_linux()
+
+# print(list)

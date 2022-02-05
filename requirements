@@ -1,5 +1,6 @@
 pyyaml
 boto3
-tarfile
-shutil
 argparse
+bs4
+shutil
+tarfile
