@@ -1,4 +1,5 @@
 import tarfile
+import zipfile
 from os import path, mkdir, listdir, getcwd, system as os_system, remove
 from platform import system
 from shutil import move, rmtree
@@ -116,9 +117,7 @@ class Barista:
         if path.exists(java_folder):
             rmtree(java_folder)
         targz_file_name = self.__version_to_file(version)
-        tar = tarfile.open(targz_file_name, "r:gz")
-        tar.extractall()
-        tar.close()
+        self.__extract_file(targz_file_name)
         folder_name = None
         for file in listdir("./"):
             if "jdk" in file and "versions" not in file:
@@ -184,3 +183,12 @@ class Barista:
 
     def __delete_local_version(self, java_targz_name):
         remove(f'./versions/{java_targz_name}')
+
+    def __extract_file(self, file):
+        if 'linux' in self._configuration.so_name():
+            tar = tarfile.open(file, "r:gz")
+            tar.extractall()
+            tar.close()
+        else:
+            with zipfile.ZipFile(file, 'r') as zip_ref:
+                zip_ref.extractall(file)
