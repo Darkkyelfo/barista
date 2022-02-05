@@ -60,6 +60,7 @@ class Configuration:
             self.__path_download = conf_yaml['download_path']
             self.__path_file = conf_yaml['path_file']
             self.__repository = conf_yaml['repository']
+            self.__bucket = conf_yaml['bucket']
         self.__so = system().lower()
 
     def path_download(self):
@@ -74,38 +75,41 @@ class Configuration:
     def repository(self):
         return self.__repository
 
+    def bucket(self):
+        return self.__bucket
+
 
 class Barista:
 
     def __init__(self):
         self._configuration = Configuration()
-        self.__s3client = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-2')
-        self.__bucket_name = 'baristajdkrepo'
+        if 'aws' in self._configuration.repository():
+            self.__s3client = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-2')
         if not path.exists(self._configuration.path_download()):
             mkdir(self._configuration.path_download())
         self.__versions = self.get_list_java_versions()
 
     def download_java_version(self, version, force=False):
-        file_to_download = self.__versions[version]
-        version_exists = False
-        file_name = None
-        for file in self.list_installed_java_versions():
-            file_name = file.lower()
-            if version in file_name:
-                version_exists = True
-                break
-        if not version_exists:
-            print(f"DOWNLOADING {version}...")
-            self.__download_java_file(version, file_to_download)
-            print(f"DOWNLOAD {version} FINISHED !")
-        elif force:
-            print(f"DOWNLOADING {version}...")
-            self.__delete_local_version(file_name)
-            self.__download_java_file(version, file_to_download)
-            print(f"DOWNLOAD {version} FINISHED !")
-
-    def __delete_local_version(self, java_targz_name):
-        remove(f'./versions/{java_targz_name}')
+        try:
+            file_to_download = self.__versions[version]
+            version_exists = False
+            file_name = None
+            for file in self.list_installed_java_versions():
+                file_name = file.lower()
+                if version.lower() in file_name:
+                    version_exists = True
+                    break
+            if not version_exists:
+                print(f"DOWNLOADING {version}...")
+                self.__download_java_file(version, file_to_download)
+                print(f"DOWNLOAD {version} FINISHED !")
+            elif force:
+                print(f"DOWNLOADING {version}...")
+                self.__delete_local_version(file_name)
+                self.__download_java_file(version, file_to_download)
+                print(f"DOWNLOAD {version} FINISHED !")
+        except KeyError:
+            print("Download FAIL: This version is not avaliable on this repository")
 
     def change_java_version(self, version):
         java_folder = "jdk"
@@ -127,7 +131,7 @@ class Barista:
     def get_list_java_versions(self):
         versions = {}
         if 'aws' in self._configuration.repository():
-            for java in self.__s3client.list_objects(Bucket=self.__bucket_name)["Contents"]:
+            for java in self.__s3client.list_objects(Bucket=self._configuration.bucket())["Contents"]:
                 java_version = java["Key"]
                 if self._configuration.so_name() in java_version and "jdk" in java_version:
                     format_version = java_version.replace(f"{self._configuration.so_name()}/", "") \
@@ -145,9 +149,31 @@ class Barista:
 
         return versions
 
+    def list_java_versions(self):
+        versions = list(self.__versions.keys())
+        versions.sort()
+        return versions
+
+    def list_installed_java_versions(self):
+        return listdir("./versions")
+
+    def delete_all(self):
+        for file in self.list_installed_java_versions():
+            self.__delete_local_version(file)
+
+    def set_enviroment_var(self):
+        if 'windows' in self._configuration.so_name():
+            os_system(f'setx /M path "%path%;{getcwd()}"')
+        else:
+            os_system(f"echo 'export PATH={getcwd()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
+
+    def __version_to_file(self, version):
+        return f"{self._configuration.path_download()}/{version.lower()}.tar.gz"
+
     def __download_java_file(self, version, file_to_download):
         if 'aws' in self._configuration.repository():
-            self.__s3client.download_file(self.__bucket_name, file_to_download, self.__version_to_file(version))
+            self.__s3client.download_file(self._configuration.bucket(), file_to_download,
+                                          self.__version_to_file(version))
         else:
             request.urlretrieve(file_to_download, self.__version_to_file(version))
 
@@ -156,19 +182,9 @@ class Barista:
             .replace(".tar.gz", "") \
             .replace("_bin", "")
 
-    def list_java_versions(self):
-        versions = list(self.__versions.keys())
-        versions.sort()
-        return versions
+    def __delete_local_version(self, java_targz_name):
+        remove(f'./versions/{java_targz_name}')
 
-    def __version_to_file(self, version):
-        return f"{self._configuration.path_download()}/{version.lower()}.tar.gz"
 
-    def list_installed_java_versions(self):
-        return listdir("./versions")
 
-    def set_enviroment_var(self):
-        if 'windows' in self._configuration.so_name():
-            os_system(f'setx /M path "%path%;{getcwd()}"')
-        else:
-            os_system(f"echo 'export PATH={getcwd()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
+Barista().download_java_version("15.0.2 (build 15.0.2+9)")
