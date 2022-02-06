@@ -4,6 +4,15 @@ import argparse
 from exceptions import ERROR_DOWNLOAD, ERROR_SET_ENV_VAR
 from resources import Barista
 
+
+def set_enviroment_var(barista):
+    try:
+        barista.set_enviroment_var()
+        print("CONFIGURATION REALIZED !")
+    except:
+        print(ERROR_SET_ENV_VAR)
+
+
 parser = argparse.ArgumentParser(description='Manager for java and maven versions')
 parser.add_argument("source", help="pass java or maven", type=str, choices=["java", "maven"])
 parser.add_argument("operation", help="determine what action will be realizaded.", type=str,
@@ -14,7 +23,6 @@ parser.add_argument("-l", "--local", help="check the local java or maven version
 args = parser.parse_args()
 
 barista = Barista()
-barista.set_enviroment_var()
 if args.operation == 'list':
     if args.local:
         for version in barista.list_installed_java_versions():
@@ -37,10 +45,9 @@ elif args.operation == 'use':
 elif args.operation == 'clear':
     barista.delete_all()
 elif args.operation == 'configure':
-    response = str(input(f"This command will set the jdk enviroment var to barista folder. S/N ? "))
-    if response in 'S':
-        try:
-            barista.set_enviroment_var()
-            print("CONFIGURATION REALIZED !")
-        except:
-            print(ERROR_SET_ENV_VAR)
+    if args.force:
+        set_enviroment_var(barista)
+    else:
+        response = str(input(f"This command will set the jdk enviroment var to barista folder. S/N ? "))
+        if response in 'S':
+            set_enviroment_var(barista)

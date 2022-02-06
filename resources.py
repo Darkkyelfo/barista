@@ -60,6 +60,7 @@ class Configuration:
             conf_yaml = yaml.load(f, Loader=yaml.FullLoader)["conf"]
             self.__path_download = conf_yaml['download_path']
             self.__path_file = conf_yaml['path_file']
+            self.__jdk_path = conf_yaml['jdk_path']
             self.__repository = conf_yaml['repository']
             self.__bucket = conf_yaml['bucket']
         self.__so = system().lower()
@@ -78,6 +79,9 @@ class Configuration:
 
     def bucket(self):
         return self.__bucket
+
+    def jdk_path(self):
+        return self.__jdk_path
 
 
 class Barista:
@@ -109,7 +113,6 @@ class Barista:
             self.__download_java_file(version, file_to_download)
             print(f"DOWNLOAD {version} FINISHED !")
 
-
     def change_java_version(self, version):
         java_folder = "jdk"
         if path.exists(java_folder):
@@ -117,12 +120,12 @@ class Barista:
         targz_file_name = self.__version_to_file(version)
         self.__extract_file(targz_file_name)
         folder_name = None
-        for file in listdir("./"):
+        for file in listdir(self._configuration.jdk_path()):
             if "jdk" in file and "versions" not in file:
                 folder_name = file
                 print(file)
         if folder_name is not None:
-            move(folder_name, "jdk")
+            move(folder_name, f"{self._configuration.jdk_path()}/jdk")
         print(f"JDK {version} ACTIVATED!!")
 
     def get_list_java_versions(self):
