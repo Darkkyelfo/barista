@@ -11,7 +11,7 @@ echo "DOWNLOADING PYTHON DEPENDECIES..."
 pip3 install -r requirements
 echo "CREATING SYMBOLIC LINK..."
 sudo ln -s "$(pwd)/conf.yaml" /usr/bin/conf.yaml
-sudo ln -s "$(pwd)/conf.yaml" /usr/bin/barista/conf.yaml
+sudo ln -s "$(pwd)/barista.py" /usr/bin/barista
 echo "CONFIGURATION OF ENVIROMENT VARIABLE"
 python barista.py configure -f
 echo "INSTALLATION COMPLETED SUCCESSFULLY"
