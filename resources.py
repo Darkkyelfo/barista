@@ -91,26 +91,24 @@ class Barista:
         self.__versions = self.get_list_java_versions()
 
     def download_java_version(self, version, force=False):
-        try:
-            file_to_download = self.__versions[version]
-            version_exists = False
-            file_name = None
-            for file in self.list_installed_java_versions():
-                file_name = file.lower()
-                if version.lower() in file_name:
-                    version_exists = True
-                    break
-            if not version_exists:
-                print(f"DOWNLOADING {version}...")
-                self.__download_java_file(version, file_to_download)
-                print(f"DOWNLOAD {version} FINISHED !")
-            elif force:
-                print(f"DOWNLOADING {version}...")
-                self.__delete_local_version(file_name)
-                self.__download_java_file(version, file_to_download)
-                print(f"DOWNLOAD {version} FINISHED !")
-        except KeyError:
-            print("Download FAIL: This version is not avaliable on this repository")
+        file_to_download = self.__versions[version]
+        version_exists = False
+        file_name = None
+        for file in self.list_installed_java_versions():
+            file_name = file.lower()
+            if version.lower() in file_name:
+                version_exists = True
+                break
+        if not version_exists:
+            print(f"DOWNLOADING {version}...")
+            self.__download_java_file(version, file_to_download)
+            print(f"DOWNLOAD {version} FINISHED !")
+        elif force:
+            print(f"DOWNLOADING {version}...")
+            self.__delete_local_version(file_name)
+            self.__download_java_file(version, file_to_download)
+            print(f"DOWNLOAD {version} FINISHED !")
+
 
     def change_java_version(self, version):
         java_folder = "jdk"
@@ -162,7 +160,7 @@ class Barista:
 
     def set_enviroment_var(self):
         if 'windows' in self._configuration.so_name():
-            os_system(f'setx /M path "%path%;{getcwd()}"')
+            os_system(f'setx /M path "%path%;{getcwd()}/jdk/bin"')
         else:
             os_system(f"echo 'export PATH={getcwd()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
 
@@ -191,4 +189,4 @@ class Barista:
             tar.close()
         else:
             with zipfile.ZipFile(file, 'r') as zip_ref:
-                zip_ref.extractall(file)
+                zip_ref.extractall("./")
