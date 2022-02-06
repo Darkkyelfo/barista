@@ -3,6 +3,7 @@ import argparse
 
 from exceptions import ERROR_DOWNLOAD, ERROR_SET_ENV_VAR
 from resources import Barista
+from os import path
 
 
 def set_enviroment_var(barista):
@@ -13,6 +14,13 @@ def set_enviroment_var(barista):
         print(ERROR_SET_ENV_VAR)
 
 
+conf_file = "conf.yaml"
+
+if not path.exists(conf_file):
+    conf_file = path.relpath("/usr/bin/conf.yaml")
+
+barista = Barista(conf_file=conf_file)
+
 parser = argparse.ArgumentParser(description='Manager for java and maven versions')
 parser.add_argument("source", help="pass java or maven", type=str, choices=["java", "maven"])
 parser.add_argument("operation", help="determine what action will be realizaded.", type=str,
@@ -22,7 +30,6 @@ parser.add_argument("-f", "--force", help="force download of file", required=Fal
 parser.add_argument("-l", "--local", help="check the local java or maven version", required=False, action='store_true')
 args = parser.parse_args()
 
-barista = Barista()
 if args.operation == 'list':
     if args.local:
         for version in barista.list_installed_java_versions():

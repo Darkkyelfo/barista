@@ -86,8 +86,8 @@ class Configuration:
 
 class Barista:
 
-    def __init__(self):
-        self._configuration = Configuration()
+    def __init__(self, conf_file="conf.yaml"):
+        self._configuration = Configuration(file=conf_file)
         if 'aws' in self._configuration.repository():
             self.__s3client = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-2')
         if not path.exists(self._configuration.path_download()):
@@ -114,7 +114,7 @@ class Barista:
             print(f"DOWNLOAD {version} FINISHED !")
 
     def change_java_version(self, version):
-        java_folder = "jdk"
+        java_folder = f"{self._configuration.jdk_path()}/jdk"
         if path.exists(java_folder):
             rmtree(java_folder)
         targz_file_name = self.__version_to_file(version)
@@ -125,7 +125,7 @@ class Barista:
                 folder_name = file
                 print(file)
         if folder_name is not None:
-            move(folder_name, f"{self._configuration.jdk_path()}/jdk")
+            move(f"{self._configuration.jdk_path()}/{folder_name}", java_folder)
         print(f"JDK {version} ACTIVATED!!")
 
     def get_list_java_versions(self):
@@ -155,7 +155,7 @@ class Barista:
         return versions
 
     def list_installed_java_versions(self):
-        return listdir("./versions")
+        return listdir(self._configuration.path_download())
 
     def delete_all(self):
         for file in self.list_installed_java_versions():
@@ -183,12 +183,12 @@ class Barista:
             .replace("_bin", "")
 
     def __delete_local_version(self, java_targz_name):
-        remove(f'./versions/{java_targz_name}')
+        remove(f'{self._configuration.path_download()}/{java_targz_name}')
 
     def __extract_file(self, file):
         if 'linux' in self._configuration.so_name():
             tar = tarfile.open(file, "r:gz")
-            tar.extractall()
+            tar.extractall(path=f"{self._configuration.jdk_path()}/")
             tar.close()
         else:
             with zipfile.ZipFile(file, 'r') as zip_ref:
