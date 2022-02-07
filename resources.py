@@ -123,7 +123,6 @@ class Barista:
         for file in listdir(self._configuration.jdk_path()):
             if "jdk" in file and "versions" not in file:
                 folder_name = file
-                print(file)
         if folder_name is not None:
             move(f"{self._configuration.jdk_path()}/{folder_name}", java_folder)
         print(f"JDK {version} ACTIVATED!!")
@@ -166,8 +165,7 @@ class Barista:
             os_system(f'setx /M path "%path%;{self._configuration.jdk_path()}/jdk/bin"')
         else:
             os_system(
-                f"echo 'export PATH={self._configuration.jdk_path()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
-            os_system("source ~/.bashrc")
+                f"echo 'export JAVA_HOME={self._configuration.jdk_path()}/jdk/bin\nexport PATH={self._configuration.jdk_path()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
 
     def __version_to_file(self, version):
         return f"{self._configuration.path_download()}/{version.lower()}.tar.gz"

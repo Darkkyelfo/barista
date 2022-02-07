@@ -14,4 +14,4 @@ As root user execute the follow commands: <br>
 `git clone https://github.com/Darkkyelfo/barista.git` <br>
 `cd barista` <br>
 `sudo chmod +x install.sh` <br>
-`sudo ./install.sh`
+`./install.sh`
