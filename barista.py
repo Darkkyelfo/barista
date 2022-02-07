@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 
-from exceptions import ERROR_DOWNLOAD, ERROR_SET_ENV_VAR
+from exceptions import ERROR_DOWNLOAD, ERROR_SET_ENV_VAR, ERROR_FILE_NOT_FOUND_LOCAL_JAVA
 from resources import Barista
 from os import path
 
@@ -43,12 +43,15 @@ elif args.operation == 'download':
     except KeyError:
         print(ERROR_DOWNLOAD)
 elif args.operation == 'use':
-    if args.force:
-        try:
+    try:
+        if args.force:
             barista.download_java_version(args.version, args.force)
-        except KeyError:
-            print(ERROR_DOWNLOAD)
-    barista.change_java_version(args.version)
+        barista.change_java_version(args.version)
+    except KeyError:
+        print(ERROR_DOWNLOAD)
+    except FileNotFoundError:
+        print(ERROR_FILE_NOT_FOUND_LOCAL_JAVA)
+
 elif args.operation == 'clear':
     barista.delete_all()
 elif args.operation == 'configure':

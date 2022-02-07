@@ -1,6 +1,6 @@
 import tarfile
 import zipfile
-from os import path, mkdir, listdir, getcwd, system as os_system, remove
+from os import path, mkdir, listdir, system as os_system, remove
 from platform import system
 from shutil import move, rmtree
 from urllib import request
@@ -163,9 +163,11 @@ class Barista:
 
     def set_enviroment_var(self):
         if 'windows' in self._configuration.so_name():
-            os_system(f'setx /M path "%path%;{getcwd()}/jdk/bin"')
+            os_system(f'setx /M path "%path%;{self._configuration.jdk_path()}/jdk/bin"')
         else:
-            os_system(f"echo 'export PATH={getcwd()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
+            os_system(
+                f"echo 'export PATH={self._configuration.jdk_path()}/jdk/bin:$PATH' >> {self._configuration.path_file()}")
+            os_system("source ~/.bashrc")
 
     def __version_to_file(self, version):
         return f"{self._configuration.path_download()}/{version.lower()}.tar.gz"
