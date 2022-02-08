@@ -92,7 +92,7 @@ class Barista:
     def __init__(self, conf_file="conf.yaml"):
         self._configuration = Configuration(file=conf_file)
         if 'aws' in self._configuration.repository():
-            self.__s3client = boto3.client('s3', config=Config(signature_version=UNSIGNED), region_name='us-east-2')
+            self.__s3client = boto3.client('s3')
         if not path.exists(self._configuration.path_download()):
             mkdir(self._configuration.path_download())
         self.__versions = self.get_list_java_versions()
