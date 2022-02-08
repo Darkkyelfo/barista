@@ -11,6 +11,8 @@ from botocore import UNSIGNED
 from botocore.client import Config
 from bs4 import BeautifulSoup
 
+from util import get_major_version
+
 
 class LinkHolderOpenJDK:
     def __init__(self, version, operation_system, architecture, link):
@@ -85,6 +87,7 @@ class Configuration:
 
 
 class Barista:
+    version = "0.1.0"
 
     def __init__(self, conf_file="conf.yaml"):
         self._configuration = Configuration(file=conf_file)
@@ -150,11 +153,13 @@ class Barista:
 
     def list_java_versions(self):
         versions = list(self.__versions.keys())
-        versions.sort()
+        versions.sort(reverse=True, key=get_major_version)
         return versions
 
     def list_installed_java_versions(self):
-        return listdir(self._configuration.path_download())
+        versions = listdir(self._configuration.path_download())
+        versions.sort(reverse=True, key=get_major_version)
+        return versions
 
     def delete_all(self):
         for file in self.list_installed_java_versions():

@@ -9,7 +9,7 @@ echo "conf:
 
 echo "DOWNLOADING PYTHON DEPENDECIES..."
 pip install -r requirements
-echo "GRANTING EXECUTION PERMISSION"
+echo "GRANTING EXECUTION PERMISSION..."
 sudo chmod +x barista.py
 echo "CREATING SYMBOLIC LINK..."
 sudo ln -s "$(pwd)/conf.yaml" /usr/bin/conf.yaml
