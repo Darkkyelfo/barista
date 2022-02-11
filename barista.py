@@ -2,22 +2,11 @@
 import argparse
 from os import path
 
-from exceptions import ERROR_DOWNLOAD, ERROR_SET_ENV_VAR, ERROR_FILE_NOT_FOUND_LOCAL_JAVA
+from exceptions import ERROR_DOWNLOAD, ERROR_FILE_NOT_FOUND_LOCAL_JAVA
 from resources import Barista
+from util import set_enviroment_var
 
-
-def set_enviroment_var(barista):
-    try:
-        barista.set_enviroment_var()
-        print("CONFIGURATION REALIZED !")
-    except:
-        print(ERROR_SET_ENV_VAR)
-
-
-conf_file = "conf.yaml"
-
-if not path.exists(conf_file):
-    conf_file = path.relpath("/usr/bin/conf.yaml")
+conf_file = "conf.yaml" if not path.exists("conf.yaml") else path.relpath("/usr/bin/conf.yaml")
 
 barista = Barista(conf_file=conf_file)
 
@@ -40,14 +29,16 @@ if args.operation == 'list':
             print(version)
 elif args.operation == 'download':
     try:
-        barista.download_java_version(args.name, args.force)
+        version = args.name if not args.name.isnumeric() else barista.find_major_version_from_number(int(args.name))
+        barista.download_java_version(version, args.force)
     except KeyError:
         print(ERROR_DOWNLOAD)
 elif args.operation == 'use':
     try:
+        version = args.name if not args.name.isnumeric() else barista.find_major_version_from_number(int(args.name))
         if args.force:
-            barista.download_java_version(args.name, args.force)
-        barista.change_java_version(args.name)
+            barista.download_java_version(version, args.force)
+        barista.change_java_version(version)
     except KeyError:
         print(ERROR_DOWNLOAD)
     except FileNotFoundError:

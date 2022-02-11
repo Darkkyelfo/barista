@@ -7,8 +7,6 @@ from urllib import request
 
 import boto3
 import yaml
-from botocore import UNSIGNED
-from botocore.client import Config
 from bs4 import BeautifulSoup
 
 from util import get_major_version
@@ -97,7 +95,7 @@ class Barista:
             mkdir(self._configuration.path_download())
         self.__versions = self.get_list_java_versions()
 
-    def download_java_version(self, version, force=False):
+    def download_java_version(self, version: str, force=False):
         file_to_download = self.__versions[version]
         version_exists = False
         file_name = None
@@ -115,6 +113,14 @@ class Barista:
             self.__delete_local_version(file_name)
             self.__download_java_file(version, file_to_download)
             print(f"DOWNLOAD {version} FINISHED !")
+
+    def find_major_version_from_number(self, passed_version: int):
+        for version in self.list_java_versions():
+            major_version = get_major_version(version)
+            if passed_version == major_version:
+                return version
+            elif passed_version > major_version:
+                raise KeyError
 
     def change_java_version(self, version):
         java_folder = f"{self._configuration.jdk_path()}/jdk"
