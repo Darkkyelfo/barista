@@ -6,7 +6,7 @@ from exceptions import ERROR_DOWNLOAD, ERROR_FILE_NOT_FOUND_LOCAL_JAVA
 from resources import Barista
 from util import set_enviroment_var
 
-conf_file = "conf.yaml" if not path.exists("conf.yaml") else path.relpath("/usr/bin/conf.yaml")
+conf_file = "conf.yaml" if path.exists("conf.yaml") else path.relpath("/usr/bin/conf.yaml")
 
 barista = Barista(conf_file=conf_file)
 
