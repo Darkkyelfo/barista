@@ -7,8 +7,10 @@ from urllib import request
 
 import boto3
 import yaml
+from botocore.exceptions import ParamValidationError
 from bs4 import BeautifulSoup
 
+from exceptions import AWSRepositoryNotFoundException
 from util import get_major_version
 
 
@@ -56,14 +58,19 @@ class OpenJDKExtractor:
 
 class Configuration:
     def __init__(self, file="conf.yaml"):
-        with open(file) as f:
-            conf_yaml = yaml.load(f, Loader=yaml.FullLoader)["conf"]
-            self.__path_download = conf_yaml['download_path']
-            self.__path_file = conf_yaml['path_file']
-            self.__jdk_path = conf_yaml['jdk_path']
-            self.__repository = conf_yaml['repository']
-            self.__bucket = conf_yaml['bucket']
-        self.__so = system().lower()
+        try:
+            with open(file) as f:
+                conf_yaml = yaml.load(f, Loader=yaml.FullLoader)["conf"]
+                self.__path_download = conf_yaml['download_path']
+                self.__path_file = conf_yaml['path_file']
+                self.__jdk_path = conf_yaml['jdk_path']
+                self.__repository = conf_yaml['repository']
+                if self.__repository.lower() in 'aws':
+                    self.__bucket = conf_yaml['aws']['bucket']
+                    self.__set_aws_acess_and_secret(conf_yaml)
+            self.__so = system().lower()
+        except KeyError:
+            raise AWSRepositoryNotFoundException
 
     def path_download(self):
         return self.__path_download
@@ -83,17 +90,36 @@ class Configuration:
     def jdk_path(self):
         return self.__jdk_path
 
+    def acess_key(self):
+        return self.__acess_key
+
+    def secret_key(self):
+        return self.__secret_key
+
+    def __set_aws_acess_and_secret(self, conf_yaml):
+        try:
+            self.__secret_key = conf_yaml['aws']['secret_access_key']
+            self.__acess_key = conf_yaml['aws']['access_key_id']
+        except KeyError:
+            self.__secret_key = None
+            self.__acess_key = None
+
 
 class Barista:
     version = "0.1.0"
 
     def __init__(self, conf_file="conf.yaml"):
-        self._configuration = Configuration(file=conf_file)
-        if 'aws' in self._configuration.repository():
-            self.__s3client = boto3.client('s3')
-        if not path.exists(self._configuration.path_download()):
-            mkdir(self._configuration.path_download())
-        self.__versions = self.get_list_java_versions()
+        try:
+            self._configuration = Configuration(file=conf_file)
+            if 'aws' in self._configuration.repository():
+                self.__s3client = boto3.client('s3',
+                                               aws_access_key_id=self._configuration.acess_key(),
+                                               aws_secret_access_key=self._configuration.secret_key())
+            if not path.exists(self._configuration.path_download()):
+                mkdir(self._configuration.path_download())
+            self.__versions = self.get_list_java_versions()
+        except ParamValidationError:
+            raise AWSRepositoryNotFoundException
 
     def download_java_version(self, version: str, force=False):
         file_to_download = self.__versions[version]

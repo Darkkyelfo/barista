@@ -4,3 +4,10 @@ ERROR_FILE_NOT_FOUND_LOCAL_JAVA = """The version you want install is not avaliab
 the download before or use the tag -f
 barista java use <version> -f
 """
+
+
+class AWSRepositoryNotFoundException(Exception):
+    def __init__(self):
+        super(AWSRepositoryNotFoundException, self).__init__(
+            "Error:Bucket not found or with invalid name. "
+            "If you want to use aws as repository inform the correct name of bucket")
