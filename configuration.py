@@ -77,3 +77,5 @@ export MAVEN_HOME={configuration.maven_path()}/maven
 export JAVA_HOME={configuration.jdk_path()}/jdk
 export PATH=$MAVEN_HOME/bin:$JAVA_HOME/bin:$PATH"""
             os.system(f"echo '{exports_path}' >> {configuration.path_file()}")
+
+Configuration(file="conf.yaml")

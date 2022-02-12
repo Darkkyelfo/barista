@@ -1,7 +1,7 @@
 #!/bin/sh
 echo "CREATING CONFIGURATION FILE..."
 echo "conf:
-  download_path: $PWD/java_versions
+  download_java_path: $PWD/java_versions
   download_maven_path: $PWD/maven_versions
   jdk_path: $PWD
   maven_path: $PWD
