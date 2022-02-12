@@ -2,7 +2,7 @@
 echo "CREATING CONFIGURATION FILE..."
 echo "conf:
   download_path: $PWD/java_versions
-  download_maven_path:$PWD/maven_versions
+  download_maven_path: $PWD/maven_versions
   jdk_path: $PWD
   maven_path: $PWD
   path_file: ~/.bashrc
@@ -21,7 +21,7 @@ echo "CREATING SYMBOLIC LINK..."
 sudo ln -s "$(pwd)/conf.yaml" /usr/bin/conf.yaml
 sudo ln -s "$(pwd)/barista.py" /usr/bin/barista
 echo "CONFIGURATION OF ENVIROMENT VARIABLE"
-python3 barista.py configure -f
+python3 barista.py configure path -f
 echo "INSTALLATION COMPLETED SUCCESSFULLY"
 
 
