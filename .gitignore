@@ -3,5 +3,8 @@ jdk/*
 versions/*
 
 versions
+java_versions
+maven_versions
+maven
 jdk
 .idea
