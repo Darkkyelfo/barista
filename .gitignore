@@ -1,7 +1,7 @@
 .idea/*
 jdk/*
 versions/*
-
+m2_*
 versions
 java_versions
 maven_versions

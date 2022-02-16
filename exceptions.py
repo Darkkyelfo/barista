@@ -20,3 +20,10 @@ class MavenVersionNotFoundException(Exception):
 class JavaVersionNotFoundException(Exception):
     def __init__(self, version):
         super(JavaVersionNotFoundException, self).__init__(f"The Java: {version} not exists in current repository!")
+
+class MavenFolderNotFound(Exception):
+    def __init__(self):
+        super(MavenFolderNotFound, self).__init__(f"The Maven installation folder not exists!! Make download before use!")
+
+
+

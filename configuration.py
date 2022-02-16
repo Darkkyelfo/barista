@@ -11,14 +11,18 @@ class Configuration:
         try:
             with open(file) as f:
                 conf_yaml = yaml.load(f, Loader=yaml.FullLoader)["conf"]
-                self.__download_java_path = conf_yaml['download_java_path']
-                self.__download_maven_path = conf_yaml['download_maven_path']
+
                 self.__path_file = conf_yaml['path_file']
-                self.__jdk_path = conf_yaml['jdk_path']
-                self.__maven_path = conf_yaml['maven_path']
-                self.__repository = conf_yaml['java_repository']
+
+                self.__jdk_path = conf_yaml['jdk']['install_path']
+                self.__download_java_path = conf_yaml['jdk']['download_path']
+                self.__repository = conf_yaml['jdk']['repository']
+
+                self.__maven_path = conf_yaml['maven']['install_path']
+                self.__download_maven_path = conf_yaml['maven']['download_path']
+
                 if self.__repository.lower() in 'aws':
-                    self.__bucket = conf_yaml['aws']['bucket']
+                    self.__bucket = conf_yaml['jdk']['aws']['bucket']
                     self.__set_aws_acess_and_secret(conf_yaml)
             self.__so = system().lower()
         except KeyError:
@@ -52,6 +56,9 @@ class Configuration:
         return self.__secret_key
 
     def maven_path(self):
+        return self.__maven_path
+
+    def m2_path(self):
         return self.__maven_path
 
     def __set_aws_acess_and_secret(self, conf_yaml):

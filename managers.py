@@ -2,11 +2,13 @@ from abc import ABC, abstractmethod
 from os import path, mkdir, listdir, remove
 from shutil import move, rmtree
 from urllib import request
+from xml.etree import ElementTree
 
 import boto3
 from botocore.exceptions import ParamValidationError
 
-from exceptions import AWSRepositoryNotFoundException, MavenVersionNotFoundException, JavaVersionNotFoundException
+from exceptions import AWSRepositoryNotFoundException, MavenVersionNotFoundException, JavaVersionNotFoundException, \
+    MavenFolderNotFound
 from parsers import OpenJDKExtractor, MavenExtractor
 from util import get_major_version, extract_tar, extract_zip
 
@@ -192,6 +194,7 @@ class MavenManager(Manager):
                 break
         if folder_name is not None:
             move(f"{self._configuration.jdk_path()}/{folder_name}", maven_folder)
+        self.__set_m2_folder(version)
         print(f"MAVEN {version} ACTIVATED!!")
 
     def list_versions(self):
@@ -221,3 +224,18 @@ class MavenManager(Manager):
 
     def __maven_tar_name(self, version):
         return f"apache-maven-{version}-bin.tar.gz"
+
+    def __set_m2_folder(self, name_folder):
+        folder_to_save = f"{self._configuration.m2_path()}/m2_{name_folder}"
+        if not path.exists(f"{self._configuration.maven_path()}/maven"):
+            raise MavenFolderNotFound
+        if not path.exists(folder_to_save):
+            mkdir(folder_to_save)
+        settings_file = f"{self._configuration.maven_path()}/maven/conf/settings.xml"
+
+        file_xml = ElementTree.parse(settings_file)
+        root = file_xml.getroot()
+        local_repository = ElementTree.Element("localRepository")
+        local_repository.text = folder_to_save
+        root.insert(0, local_repository)
+        file_xml.write(settings_file)

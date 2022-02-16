@@ -2,3 +2,5 @@ pyyaml
 boto3
 argparse
 bs4
+mockito
+peewee
