@@ -35,11 +35,6 @@ class Java(BaseModel):
                             in version_dict.items()]
         Java.insert_many(versions_as_list).execute()
 
-    @staticmethod
-    def reset_dataset(versions_dict):
-        Java.delete().execute()
-        Java.save_multiple_versions(versions_dict)
-
 
 class Maven(BaseModel):
     """

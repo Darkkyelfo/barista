@@ -102,7 +102,8 @@ class JavaManager(Manager):
         return versions
 
     def reset_version_list(self):
-        pass
+        Java.delete().execute()
+        self.__load_dataset()
 
     def delete_all(self):
         for file in self.list_installed_versions():
