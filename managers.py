@@ -9,6 +9,7 @@ from botocore.exceptions import ParamValidationError
 
 from exceptions import AWSRepositoryNotFoundException, MavenVersionNotFoundException, JavaVersionNotFoundException, \
     MavenFolderNotFound
+from model import Maven, Java
 from parsers import OpenJDKExtractor, MavenExtractor
 from util import get_major_version, extract_tar, extract_zip
 
@@ -35,25 +36,28 @@ class Manager(ABC):
     def delete_all(self):
         pass
 
+    def reset_version_list(self):
+        pass
+
 
 class JavaManager(Manager):
 
     def __init__(self, configuration):
         try:
             self._configuration = configuration
+            self.__load_dataset()
             if 'aws' in self._configuration.repository():
                 self.__s3client = boto3.client('s3',
                                                aws_access_key_id=self._configuration.acess_key(),
                                                aws_secret_access_key=self._configuration.secret_key())
             if not path.exists(self._configuration.path_download()):
                 mkdir(self._configuration.path_download())
-            self.__versions = self.__get_list_versions()
         except ParamValidationError:
             raise AWSRepositoryNotFoundException
 
     def download_version(self, version: str, force=False):
         try:
-            file_to_download = self.__versions[version]
+            file_to_download = Java.select().where(Java.version == version)[0].link
             version_exists = False
             file_name = None
             for file in self.list_installed_versions():
@@ -88,26 +92,28 @@ class JavaManager(Manager):
         print(f"JDK {version} ACTIVATED!!")
 
     def list_versions(self):
-        versions = list(self.__versions.keys())
-        versions.sort(reverse=True, key=get_major_version)
-        return versions
+        return Java.select().where(
+            Java.so == self._configuration.so_name() and Java.repository == self._configuration.repository()).order_by(
+            Java.major_version, Java.version)
 
     def list_installed_versions(self):
         versions = listdir(self._configuration.path_download())
         versions.sort(reverse=True, key=get_major_version)
         return versions
 
+    def reset_version_list(self):
+        pass
+
     def delete_all(self):
         for file in self.list_installed_versions():
             self.__delete_local_version(file)
 
     def find_major_version_from_number(self, passed_version: int):
-        for version in self.list_versions():
-            major_version = get_major_version(version)
-            if passed_version == major_version:
-                return version
-            elif passed_version > major_version:
-                raise KeyError
+        try:
+            return Java.select().where(Java.major_version == passed_version) \
+                .order_by(Java.major_version, Java.version.desc())[0].version
+        except IndexError:
+            raise JavaVersionNotFoundException(passed_version)
 
     def __version_to_file(self, version):
         return f"{self._configuration.path_download()}/{version.lower()}.tar.gz"
@@ -133,39 +139,44 @@ class JavaManager(Manager):
         else:
             extract_zip(file, "./")
 
-    def __get_list_versions(self):
-        versions = {}
-        if 'aws' in self._configuration.repository():
-            for java in self.__s3client.list_objects(Bucket=self._configuration.bucket())["Contents"]:
-                java_version = java["Key"]
-                if self._configuration.so_name() in java_version and "jdk" in java_version:
-                    format_version = java_version.replace(f"{self._configuration.so_name()}/", "") \
-                        .replace(".tar.gz", "") \
-                        .replace("_bin", "")
-                    versions[format_version] = java_version
-        else:
-            extractor = OpenJDKExtractor()
-            if 'linux' in self._configuration.so_name():
-                for holder in extractor.get_links_linux():
-                    versions[holder.version] = holder.link
+    def __load_dataset(self):
+        if len(Java.select()) == 0:
+            versions = {}
+            if 'aws' in self._configuration.repository():
+                for java in self.__s3client.list_objects(Bucket=self._configuration.bucket())["Contents"]:
+                    java_version = java["Key"]
+                    if self._configuration.so_name() in java_version and "jdk" in java_version:
+                        format_version = java_version.replace(f"{self._configuration.so_name()}/", "") \
+                            .replace(".tar.gz", "") \
+                            .replace("_bin", "")
+                        versions[format_version] = java_version
             else:
-                for holder in extractor.get_links_windows():
-                    versions[holder.version] = holder.link
+                extractor = OpenJDKExtractor()
+                if 'linux' in self._configuration.so_name():
+                    for holder in extractor.get_links_linux():
+                        versions[holder.version] = holder.link
+                else:
+                    for holder in extractor.get_links_windows():
+                        versions[holder.version] = holder.link
 
-        return versions
+            Java.save_multiple_versions(versions, self._configuration.so_name(), self._configuration.repository())
 
 
 class MavenManager(Manager):
 
     def __init__(self, configuration):
-        self.__versions = MavenExtractor.get_versions()
+        versions = Maven.select()
+        if len(versions) == 0:
+            Maven.save_multiple_versions(MavenExtractor.get_versions())
+
         self._configuration = configuration
         if not path.exists(self._configuration.path_maven_download()):
             mkdir(self._configuration.path_maven_download())
 
     def download_version(self, version: str, force=False):
         try:
-            version_url = self.__versions[version]
+            version_url = Maven.select().where(Maven.version == version)[0].link
+            print(version_url)
             is_installed = self.__version_in_local(version)
             if not is_installed:
                 print(f"DOWNLOADING {version}...")
@@ -198,7 +209,7 @@ class MavenManager(Manager):
         print(f"MAVEN {version} ACTIVATED!!")
 
     def list_versions(self):
-        return self.__versions.keys()
+        return Maven.select().order_by(Maven.version)
 
     def list_installed_versions(self):
         versions = listdir(self._configuration.path_maven_download())
@@ -208,6 +219,9 @@ class MavenManager(Manager):
     def delete_all(self):
         for file in self.list_installed_versions():
             self.__delete_local_version(file)
+
+    def reset_version_list(self):
+        Maven.reset_dataset(MavenExtractor.get_versions())
 
     def __version_in_local(self, version):
         for local_version in self.list_installed_versions():

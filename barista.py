@@ -40,8 +40,9 @@ try:
             for version in barista.list_installed_versions():
                 print(version)
         else:
-            for version in barista.list_versions():
-                print(version)
+            versions = barista.list_versions()
+            for i, model in enumerate(versions):
+                print(f"{i + 1} - {model.version}")
     elif args.operation == 'download':
         try:
             version = args.name if not args.name.isnumeric() else barista.find_major_version_from_number(int(args.name))
