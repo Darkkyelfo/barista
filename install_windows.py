@@ -13,7 +13,7 @@ print("CREATING CONFIGURATION FILE...")
 yaml_content = f"""conf:
   path_file: ~/.bashrc
   jdk:
-    download_path: {path}/java_versions
+    download_path: {path}\\java_versions
     install_path: {path}
     repository: openjdk
     aws:
@@ -22,7 +22,7 @@ yaml_content = f"""conf:
 #      access_key_id: <ACESS_KEY>
 #      secret_access_key: <SECRET_KEY
   maven:
-    download_path: {path}/maven_versions
+    download_path: {path}\\maven_versions
     install_path: {path}
 """
 create_a_file("conf.yaml", yaml_content)

@@ -138,7 +138,7 @@ class JavaManager(Manager):
         if 'linux' in self._configuration.so_name():
             extract_tar(file, f"{self._configuration.jdk_path()}/")
         else:
-            extract_zip(file, "./")
+            extract_tar(file, f"{self._configuration.jdk_path()}\\")
 
     def __load_dataset(self):
         if len(Java.select()) == 0:
