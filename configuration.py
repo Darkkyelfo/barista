@@ -1,4 +1,5 @@
 import os
+import pathlib
 from platform import system
 
 import yaml
@@ -71,13 +72,14 @@ class Configuration:
 
 
 class EnvironmentSetter:
-
+    import pathlib
     @staticmethod
     def update_path_values(configuration: Configuration):
 
         if 'windows' in configuration.so_name():
-            os.system(f'setx /M path "%path%;{configuration.maven_path()}/maven/bin"')
-            os.system(f'setx /M path "%path%;{configuration.maven_path()}/maven/bin"')
+            os.system(f'setx /M path "%path%;{configuration.maven_path()}\\maven/bin"')
+            os.system(f'setx /M path "%path%;{configuration.jdk_path()}\\jdk"')
+            os.system(f'setx /M path "%path%;{pathlib.Path(__file__).parent.resolve()}\\barista.bat"')
         else:
             exports_path = f"""
 export MAVEN_HOME={configuration.maven_path()}/maven

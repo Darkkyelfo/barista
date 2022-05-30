@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 import argparse
-from os import path
 
 from configuration import Configuration, EnvironmentSetter
 from exceptions import ERROR_FILE_NOT_FOUND_LOCAL_JAVA, AWSRepositoryNotFoundException, \
     JavaVersionNotFoundException, MavenVersionNotFoundException
 from managers import JavaManager, MavenManager
+import pathlib
 
 try:
     version = "1.0.0-alpha"
-
-    conf_file = "conf.yaml" if path.exists("conf.yaml") else path.relpath("/usr/bin/conf.yaml")
+    real_path = pathlib.Path(__file__).parent.resolve()
+    conf_file = f"{real_path}/conf.yaml"
 
     parser = argparse.ArgumentParser(description='Manager for java and maven versions')
     parser.add_argument("-v", '--version', action='version', version=f'%(prog)s {version}')
